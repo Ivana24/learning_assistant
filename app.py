@@ -8,6 +8,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_core.utils.function_calling import convert_to_openai_function
 from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain.prompts import MessagesPlaceholder
+from langchain.memory import ChatMessageHistory
 from langchain.schema.agent import AgentFinish
 from langchain.agents.format_scratchpad import format_to_openai_functions
 from langchain.schema.runnable import RunnablePassthrough
@@ -58,7 +59,11 @@ agent_executor = AgentExecutor(agent=agent_chain, tools=tools, verbose=True)
 # define the respond function
 def respond(message, chat_history):
     #No LLM here, just respond with a random pre-made message
-    bot_message = agent_executor.invoke({"input": message,"chat_history":chat_history})["output"]
+    chat_history_message = ChatMessageHistory()
+    for item in chat_history:
+        chat_history_message.add_user_message(item[0])
+        chat_history_message.add_ai_message(item[1])
+    bot_message = agent_executor.invoke({"input": message, "chat_history":chat_history_message.messages})["output"]
     chat_history.append((message, bot_message))
     return "", chat_history
 
